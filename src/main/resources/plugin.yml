@@ -1,0 +1,9 @@
+name: EasyUpdateSuppressor
+version: '1.0'
+main: me.autobot.easyUpdateSuppressor.EasyUpdateSuppressor
+load: POSTWORLD
+api-version: '26.1'
+commands:
+  togglesuppression:
+    description: Main Command of this plugin
+    usage: /<command>
