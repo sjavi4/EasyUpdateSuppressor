@@ -2,6 +2,7 @@ name: EasyUpdateSuppressor
 version: '1.0'
 main: me.autobot.easyUpdateSuppressor.EasyUpdateSuppressor
 load: POSTWORLD
+folia-supported: true
 api-version: '26.1'
 commands:
   togglesuppression:

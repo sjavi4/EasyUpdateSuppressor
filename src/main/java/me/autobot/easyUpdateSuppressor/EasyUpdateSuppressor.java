@@ -3,20 +3,24 @@ package me.autobot.easyUpdateSuppressor;
 import me.autobot.easyUpdateSuppressor.Command.ToggleSuppression;
 import me.autobot.easyUpdateSuppressor.Event.OnBlockBreak;
 import me.autobot.easyUpdateSuppressor.Event.OnBlockPlace;
+import me.autobot.easyUpdateSuppressor.Scheduler.FoliaScheduler;
+import me.autobot.easyUpdateSuppressor.Scheduler.IScheduler;
+import me.autobot.easyUpdateSuppressor.Scheduler.SpigotScheduler;
+import me.autobot.easyUpdateSuppressor.Suppressor.FoliaSuppressor;
+import me.autobot.easyUpdateSuppressor.Suppressor.ISuppressor;
+import me.autobot.easyUpdateSuppressor.Suppressor.SpigotSuppressor;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
+import java.lang.reflect.InvocationTargetException;
 
 public final class EasyUpdateSuppressor extends JavaPlugin {
-    public static Method getHandle;
-    public static Method level;
-    public static Field neighborUpdater;
-    public static Field update;
 
-    public static JavaPlugin instance;
+    public static EasyUpdateSuppressor instance;
+
+    public ISuppressor suppressor;
+    public IScheduler scheduler;
 
     @Override
     public void onEnable() {
@@ -27,10 +31,17 @@ public final class EasyUpdateSuppressor extends JavaPlugin {
         getCommand("togglesuppression").setExecutor(new ToggleSuppression());
 
         try {
-            GetNMS();
-        } catch (NoSuchFieldException | ClassNotFoundException | NoSuchMethodException e) {
-            getLogger().severe(e.getLocalizedMessage());
-            Bukkit.getPluginManager().disablePlugin(this);
+            if (isFolia()) {
+                suppressor = new FoliaSuppressor();
+                scheduler = new FoliaScheduler();
+            }
+            else {
+                suppressor = new SpigotSuppressor();
+                scheduler = new SpigotScheduler();
+            }
+        }
+        catch (NoSuchFieldException | ClassNotFoundException | NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -39,22 +50,12 @@ public final class EasyUpdateSuppressor extends JavaPlugin {
         // Plugin shutdown logic
     }
 
-    void GetNMS() throws ClassNotFoundException, NoSuchMethodException, NoSuchFieldException {
-        Class<?> clazz;
-        clazz = Class.forName("org.bukkit.craftbukkit.entity.CraftEntity");
-        getHandle = clazz.getMethod("getHandle");
-
-        clazz = Class.forName("net.minecraft.world.entity.Entity");
-        level = clazz.getMethod("level");
-
-        clazz = Class.forName("net.minecraft.world.level.Level");
-        neighborUpdater = clazz.getDeclaredField("neighborUpdater");
-        neighborUpdater.setAccessible(true);
-
-        clazz = Class.forName("net.minecraft.world.level.redstone.CollectingNeighborUpdater");
-        update = clazz.getDeclaredField("count");
-        update.setAccessible(true);
-
+    private static boolean isFolia() {
+        try {
+            Class.forName("io.papermc.paper.threadedregions.RegionizedServer");
+            return true;
+        } catch (ClassNotFoundException e) {
+            return false;
+        }
     }
-
 }
